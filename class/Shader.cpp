@@ -4,101 +4,215 @@
 #include <sstream>
 #include <glad/glad.h>
 
-Shader::Shader(const std::string& fragmentShaderPath, const std::string& vertexShaderPath)
-{
-	std::string vertShaderCode, fragShaderCode;
+namespace gfx {
 
-	std::ifstream fragShaderFile(fragmentShaderPath);
-
-	if (!fragShaderFile.is_open())
+	Shader::Shader(const std::string& fragmentShaderPath, const std::string& vertexShaderPath)
+	: modelMatrixLocation(glUniformLocationLoadError),
+	  viewMatrixLocation(glUniformLocationLoadError),
+	  projectionMatrixLocation(glUniformLocationLoadError)
 	{
-		throw std::ios_base::failure("Failed to open fragment shader: " + fragmentShaderPath);
+		std::string vertexShaderCode = loadShaderCode(vertexShaderPath); 
+		std::string fragmentShaderCode = loadShaderCode(fragmentShaderPath);
+
+		GLuint vertexShader = compileShader(GL_VERTEX_SHADER, vertexShaderCode.c_str());
+		GLuint fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragmentShaderCode.c_str());
+
+		compileShaderProgram(vertexShader, fragmentShader);
+
+		useProgram();
+
+		initialiseMvpMatrices();
 	}
 
-	std::ifstream vertShaderFile(vertexShaderPath);
-
-	if (!vertShaderFile.is_open())
+	void Shader::initialiseMvpMatrices()
 	{
-		throw std::ios_base::failure("Failed to open vertex shader: " + vertexShaderPath);
+		loadMvpMatricesLocations();
+		initialiseMvpMatricesValues();
 	}
 
-	std::stringstream vertShaderStream, fragShaderStream;
 
-
-	fragShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-	vertShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-
-	try
+	void Shader::initialiseMvpMatricesValues()
 	{
-		vertShaderStream << vertShaderFile.rdbuf();
-		fragShaderStream << fragShaderFile.rdbuf();
-
-		vertShaderFile.close();
-		fragShaderFile.close();
-
-		vertShaderCode = vertShaderStream.str();
-		fragShaderCode = fragShaderStream.str();
+		// Initiliase all MVP matrices with identity matrices
+		updateModelMatrixValue(glm::mat4(1.0f));
+		updateViewMatrixValue(glm::mat4(1.0f));
+		updateProjectionMatrixValue(glm::mat4(1.0f));
 	}
-	catch (std::ifstream::failure& e)
+
+	void Shader::checkShaderCompilation(GLuint shaderID)
 	{
-		std::cout << "ERROR::SHADER::READING FILE: " << e.what() << std::endl;
+		int success;
+		char infoLog[512];
+		glGetShaderiv(shaderID, GL_COMPILE_STATUS, &success);
+
+		if (!success)
+		{
+			glGetShaderInfoLog(shaderID, 512, NULL, infoLog);
+			std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl; // Replace with logging module
+
+		}
 	}
 
-	char const* vertShaderCodeFormatted = vertShaderCode.c_str(); // Needs to be a char const* for gl function inputs
-	char const* fragShaderCodeFormatted = fragShaderCode.c_str();
+	std::string Shader::loadShaderCode(const std::string& shaderPath)
+	{
+		std::string shaderCode;
+		std::ifstream shaderFile(shaderPath);
 
-	// vertexShader Setup
-	unsigned int vertexShader;
-	vertexShader = glCreateShader(GL_VERTEX_SHADER); //create vertex shader object
+		if (!shaderFile.is_open())
+		{
+			throw std::ios_base::failure("Failed to open fragment shader: " + shaderPath);
+		}
 
-	glShaderSource(vertexShader, 1, &vertShaderCodeFormatted, NULL); //instantiate shader source code
+		shaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
-	glCompileShader(vertexShader); //Compile shader
+		std::stringstream shaderStream;	
 
-	// Check if compilation was successful
-	checkShaderCompilation(vertexShader);
+		try
+		{
+			shaderStream << shaderFile.rdbuf();
 
-	// fragmentShader setup (Orange)
-	GLuint fragmentShader;
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragShaderCodeFormatted, NULL);
-	glCompileShader(fragmentShader);
+			shaderFile.close();
 
-	// Check if compilation was successful
-	checkShaderCompilation(fragmentShader);
+			shaderCode = shaderStream.str();
+		}
+		catch (std::ifstream::failure& e)
+		{
+			std::cout << "ERROR::SHADER::READING FILE: " << e.what() << std::endl;
+		}
 
-	// Create the combined shader program
-	shaderID = glCreateProgram();
-
-	glAttachShader(shaderID, vertexShader);
-	glAttachShader(shaderID, fragmentShader);
-	glLinkProgram(shaderID);
-
-	//Check linking
-	int success;
-	glGetProgramiv(shaderID, GL_LINK_STATUS, &success);
-	char infoLog[512];
-	if (!success) {
-		glGetProgramInfoLog(shaderID, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::PROGRAM::COMPILATION_FAILED\n" << infoLog << std::endl;
+		return shaderCode;
 	}
 
-	// Delete individual shaders once they are linked with the shaderProgram
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
+	GLuint Shader::compileShader(GLenum shaderType, char const * shaderCode)
+	{
+		GLuint shaderObject;
 
+		shaderObject = glCreateShader(shaderType);
+
+		glShaderSource(shaderObject, 1, &shaderCode, NULL);
+
+		glCompileShader(shaderObject);
+
+		checkShaderCompilation(shaderObject);
+
+		return shaderObject;
+	}
+
+
+	void Shader::compileShaderProgram(GLuint vertexShader, GLuint fragmentShader)
+	{
+		shaderID = glCreateProgram();
+
+		glAttachShader(shaderID, vertexShader);
+		glAttachShader(shaderID, fragmentShader);
+		glLinkProgram(shaderID);
+
+		//Check linking
+		int success;
+		glGetProgramiv(shaderID, GL_LINK_STATUS, &success);
+		char infoLog[512];
+
+		if (!success) {
+			glGetProgramInfoLog(shaderID, 512, NULL, infoLog);
+			std::cout << "ERROR::SHADER::PROGRAM::COMPILATION_FAILED\n" << infoLog << std::endl;
+		}
+
+		glDeleteShader(vertexShader);
+		glDeleteShader(fragmentShader);
+
+	}
+
+	// Pull the uniform locations for the transformation matrices Model-View-Projection (MVP)
+	void Shader::loadMvpMatricesLocations()
+	{
+		modelMatrixLocation = glGetUniformLocation(shaderID, modelMatrixUniformName);
+
+		if	(modelMatrixLocation == glUniformLocationLoadError)
+		{
+			std::cout << "ERROR::\"model\" transformation matrix uniform not found in linked shader program." << std::endl;
+		}
+
+		viewMatrixLocation = glGetUniformLocation(shaderID, viewMatrixUniformName);
+
+		if	(viewMatrixLocation == glUniformLocationLoadError)
+		{
+			std::cout << "ERROR::\"view\" transformation matrix uniform not found in linked shader program." << std::endl;
+		}
+
+		projectionMatrixLocation = glGetUniformLocation(shaderID, projectionMatrixUniformName);
+
+		if	(projectionMatrixLocation == glUniformLocationLoadError)
+		{
+			std::cout << "ERROR::\"projection\" transformation matrix uniform not found in linked shader program." << std::endl;
+		}
+	}
+
+	GLint Shader::getUniformLocation(const char * const name)
+	{
+			GLint uniformLocation = glGetUniformLocation(shaderID, name);
+
+			if	(uniformLocation == glUniformLocationLoadError)
+			{
+				std::cout << "ERROR::\"model\" transformation matrix uniform not found in linked shader program." << std::endl;
+			}
+
+			return uniformLocation;
+	}
+
+	// TODO: Once there is generalised caching in updateUniformValue<> template we won't need these individual cache checks
+	bool Shader::updateModelMatrixValue(const glm::mat4& value)
+	{
+		if (value == modelMatrixCache)
+		{
+			return true;
+		}
+		
+		if (updateUniformValue(modelMatrixUniformName, value))
+		{
+			modelMatrixCache = value;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	bool Shader::updateViewMatrixValue(const glm::mat4& value)
+	{
+		if (value == viewMatrixCache)
+		{
+			return true;
+		}
+		
+		if (updateUniformValue(viewMatrixUniformName, value))
+		{
+			viewMatrixCache = value;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	bool Shader::updateProjectionMatrixValue(const glm::mat4& value)
+	{
+		if (value == projectionMatrixCache)
+		{
+			return true;
+		}
+		
+		if (updateUniformValue(projectionMatrixUniformName, value))
+		{
+			projectionMatrixCache = value;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 }
 
 
-void Shader::checkShaderCompilation(GLuint shaderID)
-{
-	int success;
-	char infoLog[512];
-	glGetShaderiv(shaderID, GL_COMPILE_STATUS, &success);
-
-	if (!success)
-	{
-		glGetShaderInfoLog(shaderID, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-}

@@ -9,29 +9,138 @@
 #include <string>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <type_traits>
 
-#define FRAG_SHADER_PATH "C:\\Users\\Maks-\\OneDrive\\Desktop\\OpenGL\\Project\\OpenGLTestProject\\OpenGLTestProject\\fragmentShader.fs"
-#define VERT_SHADER_PATH "C:\\Users\\Maks-\\OneDrive\\Desktop\\OpenGL\\Project\\OpenGLTestProject\\OpenGLTestProject\\vertexShader.vs"
+namespace gfx {
 
-class Shader
-{
-	public:
-		Shader(const std::string &fragmentShaderPath, const std::string &vertexShaderPath);
+	inline constexpr GLint glUniformLocationLoadError 	= -1; // If a uniform location does not exist then opengl will return a -1
+	inline constexpr char modelMatrixUniformName[] 		= "modelMatrix";
+	inline constexpr char viewMatrixUniformName[] 		= "viewMatrix";
+	inline constexpr char projectionMatrixUniformName[] = "projectionMatrix";
 
-		unsigned int getShaderID()
-		{
-			return shaderID;
-		}
+	// TODO: Utility template for checking if constexpr else statement is hit, probably need to be moved to a general utility module?
+	template<typename T>
+	struct always_false : std::false_type {}; 
+
+	class Shader
+	{
+		public:
+			Shader(const std::string &fragmentShaderPath, const std::string &vertexShaderPath);
+
+			template<typename T>
+			bool updateUniformValue(const GLchar * const name, const T& value)
+			{
+				GLint valueLocation = glGetUniformLocation(shaderID, name); // Needs to be replaced with an interface with a caching interface
+
+				if (valueLocation == glUniformLocationLoadError)
+				{
+					std::cout << "ERROR::" << name << " uniform not found in linked shader program." << std::endl;
+					return false;
+				}
+
+				// This if statement will need to be expanded to accomodate new data types required by the system
+				if constexpr ((std::is_same_v<T, GLint> || std::is_same_v<T, bool>)) // glsl doesn't support bools, need to treat as int
+				{
+					glUniform1i(valueLocation, value);
+				}
+				else if constexpr (std::is_same_v<T, GLfloat>) 
+				{
+					glUniform1f(valueLocation, value);
+				}
+				else if constexpr (std::is_same_v<T, glm::vec2>) 
+				{
+					glUniform2f(valueLocation, value[0], value[1]);
+				}
+				else if constexpr (std::is_same_v<T,glm::vec3>) 
+				{
+					glUniform3f(valueLocation, value[0], value[1], value[2]);
+				}
+				else if constexpr (std::is_same_v<T,glm::vec4>) 
+				{
+					glUniform4f(valueLocation, value[0], value[1], value[2], value[3]);
+				}
+				else if constexpr (std::is_same_v<T,glm::mat2>) 
+				{
+					glUniformMatrix2fv(valueLocation, 1, GL_FALSE, glm::value_ptr(value));
+				}
+				else if constexpr (std::is_same_v<T, glm::mat3>) 
+				{
+					glUniformMatrix3fv(valueLocation, 1, GL_FALSE, glm::value_ptr(value));
+				}
+				else if constexpr (std::is_same_v<T,glm::mat4>) 
+				{
+					glUniformMatrix4fv(valueLocation, 1, GL_FALSE, glm::value_ptr(value));
+				}
+				else
+				{
+					static_assert(always_false<T>::value, "Type provided for uniform update not currently supported.");
+
+				}
+
+				GLenum errorCheck = glGetError();
+
+				if (errorCheck != GL_NO_ERROR)
+				{
+					std::cout << "ERROR:: Could not write to uniform: " << name << "  Error code: " << errorCheck << std::endl;
+					return false;
+				}
+
+				return true;
+			}
+
+			void useProgram()
+			{
+				glUseProgram(shaderID); //TODO: Error checking?
+			}
+
+			GLint getUniformLocation(const char * const name);
+
+			// MVP calculated on GPU side right now, maybe will be switched to CPU once I have more information on this
+			bool updateModelMatrixValue(const glm::mat4& value);
+			bool updateViewMatrixValue(const glm::mat4& value);
+			bool updateProjectionMatrixValue(const glm::mat4& value);
 
 
-		void checkShaderCompilation(GLuint shaderID);
+
+		private:
 
 
-	private:
-		unsigned int shaderID;
+			GLuint shaderID;
 
-};
+			//TODO: Gonna keep the project matrix variable locations stored here for now. Need to think about where they go
+			//		in the architecture. For now they need to be pulled on construction after the shader program is linked.
+			GLint modelMatrixLocation;
+			GLint viewMatrixLocation;
+			GLint projectionMatrixLocation;
+
+			glm::mat4 modelMatrixCache;
+			glm::mat4 viewMatrixCache;
+			glm::mat4 projectionMatrixCache;
+
+			void checkShaderCompilation(GLuint shaderID);
+
+			std::string loadShaderCode(const std::string& shaderPath);
+
+			GLuint compileShader(GLenum shaderType, char const * shaderCode);
+
+			void compileShaderProgram(GLuint vertexShader, GLuint fragmentShader);
+
+			void loadMvpMatricesLocations();
+
+			void initialiseMvpMatricesValues();
+
+			void initialiseMvpMatrices();
 
 
+
+
+
+
+
+	};
+
+}
 
 #endif
