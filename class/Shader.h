@@ -12,6 +12,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <type_traits>
+#include <vector>
+#include <ranges>
+#include <algorithm>
 
 namespace gfx {
 
@@ -23,6 +26,19 @@ namespace gfx {
 	// TODO: Utility template for checking if constexpr else statement is hit, probably need to be moved to a general utility module?
 	template<typename T>
 	struct always_false : std::false_type {}; 
+
+	struct GlslUniform
+	{
+		std::string typeString; // Type string pulled from glsl source
+		std::string uniformName;
+	};
+
+	struct TransformMatrixUniforms
+	{
+		GlslUniform model;
+		GlslUniform view;
+		GlslUniform projection;
+	};
 
 	class Shader
 	{
@@ -106,7 +122,6 @@ namespace gfx {
 
 		private:
 
-
 			GLuint shaderID;
 
 			//TODO: Gonna keep the project matrix variable locations stored here for now. Need to think about where they go
@@ -118,6 +133,9 @@ namespace gfx {
 			glm::mat4 modelMatrixCache;
 			glm::mat4 viewMatrixCache;
 			glm::mat4 projectionMatrixCache;
+
+			TransformMatrixUniforms matrixUniforms;
+			std::vector<GlslUniform> nonTransformUniforms;
 
 			void checkShaderCompilation(GLuint shaderID);
 
@@ -133,11 +151,11 @@ namespace gfx {
 
 			void initialiseMvpMatrices();
 
+			void loadShaderUniformVariables(const std::string& shaderCode);
 
+			void loadEachFileShaderVariables(const std::string& VertShaderCode, const std::string& FragShaderCode);
 
-
-
-
+			void storeUniform(const GlslUniform& uniform);
 
 	};
 
