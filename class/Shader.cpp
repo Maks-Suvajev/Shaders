@@ -4,10 +4,6 @@
 #include <sstream>
 #include <glad/glad.h>
 
-
-
-
-
 namespace gfx {
 
 	Shader::Shader(const std::string& fragmentShaderPath, const std::string& vertexShaderPath)
