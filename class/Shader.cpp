@@ -21,6 +21,8 @@ namespace gfx {
 
 		useProgram();
 
+		loadEachFileShaderVariables(vertexShaderCode, fragmentShaderCode);
+
 		initialiseMvpMatrices();
 	}
 
@@ -213,6 +215,99 @@ namespace gfx {
 			return false;
 		}
 	}
-}
 
+
+
+	void Shader::loadShaderUniformVariables(const std::string& shaderCode)
+	{
+		std::istringstream shaderCodeStream(shaderCode);
+		std::string currLine;
+		std::vector<std::string> lines;
+
+		bool uniformDetected = false;
+		bool uniformTypeSet = false;
+		bool uniformValueSet = false;
+		bool skip = false; // Skip other token checks if token has already been assigned
+
+		GlslUniform uniform;
+
+		while (std::getline(shaderCodeStream, currLine, ';')) {
+
+			std::istringstream lineParse(currLine); // Create stream for line
+			std::string currToken; 
+
+			uniformDetected = false;
+			uniformTypeSet = false;
+			uniformValueSet = false;
+
+			while(lineParse >> currToken)
+			{
+				skip = false;
+
+				if (currToken == "uniform")
+				{
+					uniformDetected = true;
+					skip = true;
+				}
+
+				if (uniformDetected && !uniformTypeSet && !skip)
+				{
+					uniform.typeString = currToken;
+					std::cout << "Uniform type string = " << uniform.typeString << std::endl;
+					uniformTypeSet = true;
+					skip = true;
+				}
+				else if (uniformDetected && !uniformValueSet && !skip)
+				{
+					uniform.uniformName = currToken;
+					uniformValueSet = true;
+
+					std::cout << "Uniform type name = " << uniform.uniformName << std::endl;
+
+					storeUniform(uniform);
+
+					uniform = GlslUniform{}; //reset
+				}
+			}
+		}
+	}
+
+	void Shader::loadEachFileShaderVariables(const std::string& VertShaderCode, const std::string& FragShaderCode)
+	{
+		loadShaderUniformVariables(VertShaderCode);
+		loadShaderUniformVariables(FragShaderCode);
+	}
+
+	void Shader::storeUniform(const GlslUniform &uniform)
+	{
+		// need to check if keywords "model", "view" or "projection" are in uniform name.
+
+		auto toLower = [](char c){ return std::tolower(static_cast<unsigned char>(c)); }; // Convert char to lowercase
+
+		auto lowerCaseUniformNameView = uniform.uniformName | std::views::transform(toLower);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+		std::cout << "Storing uniform: " << uniform.uniformName << std::endl;
+
+		if (std::ranges::search(lowerCaseUniformNameView,  std::string_view("model")).begin() != lowerCaseUniformNameView.end())
+		{
+			matrixUniforms.model = uniform;
+			std::cout << "Stored as model uniform." << std::endl;
+		}
+		else if (std::ranges::search(lowerCaseUniformNameView, std::string_view("view")).begin() != lowerCaseUniformNameView.end())
+		{
+			matrixUniforms.view = uniform;
+			std::cout << "Stored as view uniform." << std::endl;
+		}
+		else if (std::ranges::search(lowerCaseUniformNameView, std::string_view("projection")).begin() != lowerCaseUniformNameView.end())
+		{
+			matrixUniforms.projection = uniform;
+			std::cout << "Stored as projection uniform." << std::endl;
+		}
+		else
+		{
+			std::cout << "Stored as non-MVP uniform." << std::endl;
+			nonTransformUniforms.push_back(uniform);
+		}
+	}
+}
 
