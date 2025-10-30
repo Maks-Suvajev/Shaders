@@ -26,6 +26,7 @@ namespace gfx {
 		initialiseMvpMatrices();
 	}
 
+
 	void Shader::initialiseMvpMatrices()
 	{
 		loadMvpMatricesLocations();
@@ -41,6 +42,7 @@ namespace gfx {
 		updateProjectionMatrixValue(glm::mat4(1.0f));
 	}
 
+
 	void Shader::checkShaderCompilation(GLuint shaderID)
 	{
 		int success;
@@ -54,6 +56,7 @@ namespace gfx {
 
 		}
 	}
+
 
 	std::string Shader::loadShaderCode(const std::string& shaderPath)
 	{
@@ -84,6 +87,7 @@ namespace gfx {
 
 		return shaderCode;
 	}
+
 
 	GLuint Shader::compileShader(GLenum shaderType, char const * shaderCode)
 	{
@@ -124,6 +128,7 @@ namespace gfx {
 
 	}
 
+
 	// Pull the uniform locations for the transformation matrices Model-View-Projection (MVP)
 	void Shader::loadMvpMatricesLocations()
 	{
@@ -149,6 +154,7 @@ namespace gfx {
 		}
 	}
 
+
 	GLint Shader::getUniformLocation(const char * const name)
 	{
 			GLint uniformLocation = glGetUniformLocation(shaderID, name);
@@ -161,7 +167,7 @@ namespace gfx {
 			return uniformLocation;
 	}
 
-	// TODO: Once there is generalised caching in updateUniformValue<> template we won't need these individual cache checks
+
 	bool Shader::updateModelMatrixValue(const glm::mat4& value)
 	{
 		if (value == modelMatrixCache)
@@ -180,6 +186,7 @@ namespace gfx {
 		}
 	}
 
+
 	bool Shader::updateViewMatrixValue(const glm::mat4& value)
 	{
 		if (value == viewMatrixCache)
@@ -197,6 +204,7 @@ namespace gfx {
 			return false;
 		}
 	}
+
 
 	bool Shader::updateProjectionMatrixValue(const glm::mat4& value)
 	{
@@ -272,12 +280,14 @@ namespace gfx {
 		}
 	}
 
+
 	void Shader::loadEachFileShaderVariables(const std::string& VertShaderCode, const std::string& FragShaderCode)
 	{
 		loadShaderUniformVariables(VertShaderCode);
 		loadShaderUniformVariables(FragShaderCode);
 	}
 
+    
 	void Shader::storeUniform(const GlslUniform &uniform)
 	{
 		// need to check if keywords "model", "view" or "projection" are in uniform name.

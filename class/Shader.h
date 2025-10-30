@@ -23,7 +23,7 @@ namespace gfx {
 	inline constexpr char viewMatrixUniformName[] 		= "viewMatrix";
 	inline constexpr char projectionMatrixUniformName[] = "projectionMatrix";
 
-	// TODO: Utility template for checking if constexpr else statement is hit, probably need to be moved to a general utility module?
+	// Utility template for checking if constexpr else statement is hit
 	template<typename T>
 	struct always_false : std::false_type {}; 
 
@@ -108,7 +108,7 @@ namespace gfx {
 
 			void useProgram()
 			{
-				glUseProgram(shaderID); //TODO: Error checking?
+				glUseProgram(shaderID);
 			}
 
 			GLint getUniformLocation(const char * const name);
@@ -124,8 +124,6 @@ namespace gfx {
 
 			GLuint shaderID;
 
-			//TODO: Gonna keep the project matrix variable locations stored here for now. Need to think about where they go
-			//		in the architecture. For now they need to be pulled on construction after the shader program is linked.
 			GLint modelMatrixLocation;
 			GLint viewMatrixLocation;
 			GLint projectionMatrixLocation;
@@ -156,7 +154,6 @@ namespace gfx {
 			void loadEachFileShaderVariables(const std::string& VertShaderCode, const std::string& FragShaderCode);
 
 			void storeUniform(const GlslUniform& uniform);
-
 	};
 
 }
