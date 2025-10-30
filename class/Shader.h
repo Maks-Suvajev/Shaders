@@ -52,7 +52,10 @@ namespace gfx {
 
 				if (valueLocation == glUniformLocationLoadError)
 				{
-					std::cout << "ERROR::" << name << " uniform not found in linked shader program." << std::endl;
+                    #ifdef ENABLE_DEBUG_MESSAGES
+					    std::cout << "ERROR::" << name << " uniform not found in linked shader program." << std::endl;
+                    #endif
+
 					return false;
 				}
 
@@ -99,7 +102,10 @@ namespace gfx {
 
 				if (errorCheck != GL_NO_ERROR)
 				{
-					std::cout << "ERROR:: Could not write to uniform: " << name << "  Error code: " << errorCheck << std::endl;
+                    #ifdef ENABLE_DEBUG_MESSAGES
+					    std::cout << "ERROR:: Could not write to uniform: " << name << "  Error code: " << errorCheck << std::endl;
+                    #endif
+                    
 					return false;
 				}
 

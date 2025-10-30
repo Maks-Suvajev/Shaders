@@ -52,7 +52,10 @@ namespace gfx {
 		if (!success)
 		{
 			glGetShaderInfoLog(shaderID, 512, NULL, infoLog);
-			std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl; // Replace with logging module
+
+            #ifdef ENABLE_DEBUG_MESSAGES
+			    std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl; // Replace with logging module
+            #endif
 
 		}
 	}
@@ -82,7 +85,11 @@ namespace gfx {
 		}
 		catch (std::ifstream::failure& e)
 		{
-			std::cout << "ERROR::SHADER::READING FILE: " << e.what() << std::endl;
+            #ifdef ENABLE_DEBUG_MESSAGES
+			    std::cout << "ERROR::SHADER::READING FILE: " << e.what() << std::endl;
+            #else
+                (void)e;
+            #endif
 		}
 
 		return shaderCode;
@@ -120,7 +127,10 @@ namespace gfx {
 
 		if (!success) {
 			glGetProgramInfoLog(shaderID, 512, NULL, infoLog);
-			std::cout << "ERROR::SHADER::PROGRAM::COMPILATION_FAILED\n" << infoLog << std::endl;
+
+            #ifdef ENABLE_DEBUG_MESSAGES
+			    std::cout << "ERROR::SHADER::PROGRAM::COMPILATION_FAILED\n" << infoLog << std::endl;
+            #endif
 		}
 
 		glDeleteShader(vertexShader);
@@ -136,22 +146,28 @@ namespace gfx {
 
 		if	(modelMatrixLocation == glUniformLocationLoadError)
 		{
-			std::cout << "ERROR::\"model\" transformation matrix uniform not found in linked shader program." << std::endl;
+            #ifdef ENABLE_DEBUG_MESSAGES
+			    std::cout << "ERROR::\"model\" transformation matrix uniform not found in linked shader program." << std::endl;
+            #endif
 		}
 
 		viewMatrixLocation = glGetUniformLocation(shaderID, viewMatrixUniformName);
 
 		if	(viewMatrixLocation == glUniformLocationLoadError)
 		{
-			std::cout << "ERROR::\"view\" transformation matrix uniform not found in linked shader program." << std::endl;
+            #ifdef ENABLE_DEBUG_MESSAGES
+			    std::cout << "ERROR::\"view\" transformation matrix uniform not found in linked shader program." << std::endl;
+            #endif
 		}
 
 		projectionMatrixLocation = glGetUniformLocation(shaderID, projectionMatrixUniformName);
 
 		if	(projectionMatrixLocation == glUniformLocationLoadError)
 		{
-			std::cout << "ERROR::\"projection\" transformation matrix uniform not found in linked shader program." << std::endl;
-		}
+            #ifdef ENABLE_DEBUG_MESSAGES
+			    std::cout << "ERROR::\"projection\" transformation matrix uniform not found in linked shader program." << std::endl;
+            #endif
+        }
 	}
 
 
@@ -161,7 +177,9 @@ namespace gfx {
 
 			if	(uniformLocation == glUniformLocationLoadError)
 			{
-				std::cout << "ERROR::\"model\" transformation matrix uniform not found in linked shader program." << std::endl;
+                #ifdef ENABLE_DEBUG_MESSAGES
+				    std::cout << "ERROR::\"model\" transformation matrix uniform not found in linked shader program." << std::endl;
+                #endif
 			}
 
 			return uniformLocation;
@@ -261,7 +279,11 @@ namespace gfx {
 				if (uniformDetected && !uniformTypeSet && !skip)
 				{
 					uniform.typeString = currToken;
-					std::cout << "Uniform type string = " << uniform.typeString << std::endl;
+
+                    #ifdef ENABLE_DEBUG_MESSAGES
+					    std::cout << "DEBUG::Uniform type string = " << uniform.typeString << std::endl;
+                    #endif
+
 					uniformTypeSet = true;
 					skip = true;
 				}
@@ -270,7 +292,9 @@ namespace gfx {
 					uniform.uniformName = currToken;
 					uniformValueSet = true;
 
-					std::cout << "Uniform type name = " << uniform.uniformName << std::endl;
+                    #ifdef ENABLE_DEBUG_MESSAGES
+					    std::cout << "DEBUG::Uniform type name = " << uniform.uniformName << std::endl;
+                    #endif
 
 					storeUniform(uniform);
 
@@ -287,7 +311,7 @@ namespace gfx {
 		loadShaderUniformVariables(FragShaderCode);
 	}
 
-    
+
 	void Shader::storeUniform(const GlslUniform &uniform)
 	{
 		// need to check if keywords "model", "view" or "projection" are in uniform name.
@@ -295,27 +319,40 @@ namespace gfx {
 		auto toLower = [](char c){ return std::tolower(static_cast<unsigned char>(c)); }; // Convert char to lowercase
 
 		auto lowerCaseUniformNameView = uniform.uniformName | std::views::transform(toLower);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
-		std::cout << "Storing uniform: " << uniform.uniformName << std::endl;
+        
+        #ifdef ENABLE_DEBUG_MESSAGES                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+		    std::cout << "DEBUG::Storing uniform: " << uniform.uniformName << std::endl;
+        #endif
 
 		if (std::ranges::search(lowerCaseUniformNameView,  std::string_view("model")).begin() != lowerCaseUniformNameView.end())
 		{
 			matrixUniforms.model = uniform;
-			std::cout << "Stored as model uniform." << std::endl;
+
+            #ifdef ENABLE_DEBUG_MESSAGES
+			    std::cout << "DEBUG::Stored as model uniform." << std::endl;
+            #endif
 		}
 		else if (std::ranges::search(lowerCaseUniformNameView, std::string_view("view")).begin() != lowerCaseUniformNameView.end())
 		{
 			matrixUniforms.view = uniform;
-			std::cout << "Stored as view uniform." << std::endl;
+
+            #ifdef ENABLE_DEBUG_MESSAGES
+			    std::cout << "DEBUG::Stored as view uniform." << std::endl;
+            #endif
 		}
 		else if (std::ranges::search(lowerCaseUniformNameView, std::string_view("projection")).begin() != lowerCaseUniformNameView.end())
 		{
 			matrixUniforms.projection = uniform;
-			std::cout << "Stored as projection uniform." << std::endl;
+            #ifdef ENABLE_DEBUG_MESSAGES
+			    std::cout << "DEBUG::Stored as projection uniform." << std::endl;
+            #endif
 		}
 		else
 		{
-			std::cout << "Stored as non-MVP uniform." << std::endl;
+            #ifdef ENABLE_DEBUG_MESSAGES
+			    std::cout << "DEBUG::Stored as non-MVP uniform." << std::endl;
+            #endif
+
 			nonTransformUniforms.push_back(uniform);
 		}
 	}
