@@ -41,7 +41,7 @@ struct TransformMatrixUniforms
 class Shader
 {
     public:
-        Shader(const std::string &fragmentShaderPath, const std::string &vertexShaderPath);
+        Shader(const std::string &fragmentShaderPath, const std::string &vertexShaderPath, const std::string uniqueShaderName);
 
         template<typename T>
         bool updateUniformValue(const GLchar * const name, const T& value)
@@ -115,6 +115,12 @@ class Shader
             glUseProgram(shaderID);
         }
 
+        std::string getShaderName()
+        {
+            return shaderName;
+        }
+
+
         GLint getUniformLocation(const char * const name);
 
         // MVP calculated on GPU side right now, maybe will be switched to CPU once I have more information on this
@@ -127,6 +133,7 @@ class Shader
     private:
 
         GLuint shaderID;
+        std::string shaderName;
 
         GLint modelMatrixLocation;
         GLint viewMatrixLocation;

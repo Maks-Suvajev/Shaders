@@ -6,7 +6,7 @@
 
 namespace gfx {
 
-	Shader::Shader(const std::string& fragmentShaderPath, const std::string& vertexShaderPath)
+	Shader::Shader(const std::string& fragmentShaderPath, const std::string& vertexShaderPath, const std::string uniqueShaderName)
 	: modelMatrixLocation(glUniformLocationLoadError),
 	  viewMatrixLocation(glUniformLocationLoadError),
 	  projectionMatrixLocation(glUniformLocationLoadError)
@@ -24,6 +24,8 @@ namespace gfx {
 		loadEachFileShaderVariables(vertexShaderCode, fragmentShaderCode);
 
 		initialiseMvpMatrices();
+
+        shaderName = uniqueShaderName;
 	}
 
 
@@ -188,58 +190,99 @@ namespace gfx {
 
 	bool Shader::updateModelMatrixValue(const glm::mat4& value)
 	{
-		if (value == modelMatrixCache)
-		{
-			return true;
-		}
-		
-		if (updateUniformValue(modelMatrixUniformName, value))
-		{
-			modelMatrixCache = value;
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+        static bool firstWrite = true;
+
+        if (!firstWrite)
+        {
+            if (value == modelMatrixCache)
+            {
+                return true;
+            }
+            
+            if (updateUniformValue(modelMatrixUniformName, value))
+            {
+                modelMatrixCache = value;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+		    updateUniformValue(modelMatrixUniformName, value);
+
+            firstWrite = false;
+
+            return true;
+
+        }
 	}
 
 
 	bool Shader::updateViewMatrixValue(const glm::mat4& value)
 	{
-		if (value == viewMatrixCache)
-		{
-			return true;
-		}
-		
-		if (updateUniformValue(viewMatrixUniformName, value))
-		{
-			viewMatrixCache = value;
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+
+        static bool firstWrite = true;
+
+        if (!firstWrite)
+        {
+            if (value == viewMatrixCache)
+            {
+                return true;
+            }
+            
+            if (updateUniformValue(viewMatrixUniformName, value))
+            {
+                viewMatrixCache = value;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            updateUniformValue(viewMatrixUniformName, value);
+
+            firstWrite = false;
+
+            return true;
+        }
 	}
 
 
 	bool Shader::updateProjectionMatrixValue(const glm::mat4& value)
 	{
-		if (value == projectionMatrixCache)
-		{
-			return true;
-		}
-		
-		if (updateUniformValue(projectionMatrixUniformName, value))
-		{
-			projectionMatrixCache = value;
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+        static bool firstWrite = true;
+
+        if (!firstWrite)
+        {
+            if (value == projectionMatrixCache)
+            {
+                return true;
+            }
+            
+            if (updateUniformValue(projectionMatrixUniformName, value))
+            {
+                projectionMatrixCache = value;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            updateUniformValue(projectionMatrixUniformName, value);
+
+            firstWrite = false;
+            
+            return true;
+        }
 	}
 
 
