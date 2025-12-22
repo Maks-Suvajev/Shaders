@@ -18,8 +18,8 @@ void main()
     FragPos = vec3(modelMatrix * vec4(aPos, 1.0));
 
     // Required for non-uniform scaling in order to keep normal perp. to surface - should be done on CPU side
-    //Normal = mat3(transpose(inverse(modelMatrix))) * aNormal; 
-    Normal = aNormal;
+    Normal = mat3(transpose(inverse(modelMatrix))) * aNormal; 
+    //Normal = aNormal;
 
     TexCoords = aTexCoords;
 }
