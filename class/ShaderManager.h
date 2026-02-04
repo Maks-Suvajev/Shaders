@@ -11,7 +11,10 @@
 
 namespace gfx {
 
-struct ShaderFilenameStrings
+constexpr char shaderModuleProjectName[] = "Shaders"; 
+constexpr char shaderSourceFolderName[] = "glsl"; 
+
+struct ShaderProgramFilenameStrings
 {
     std::string setName;
     std::string vertexShader;
@@ -19,28 +22,27 @@ struct ShaderFilenameStrings
 };
 
 // Define type to hold shader paths
-struct ShaderPaths
+struct ShaderProgramFilePaths
 {
     std::string setName;
     std::filesystem::path vertexShader;
     std::filesystem::path fragmentShader;
 };
 
-
 class ShaderManager
 {
     public:
-        ShaderManager(std::vector<ShaderPaths> shaderSources);
+        ShaderManager(std::vector<ShaderProgramFilePaths> shaderSources);
         Shader* getShaderPtr(std::string shaderName);
 
         std::vector<Shader*> getRawShaderPointers()
         {
             std::vector<Shader*> rawShaderPointers;
-            rawShaderPointers.reserve(shaders.size()); // optional, for efficiency
+            rawShaderPointers.reserve(shaders.size()); 
 
             for (auto& [key, shaderPtr] : shaders)
             {
-                rawShaderPointers.push_back(shaderPtr.get()); // get raw pointer without transferring ownership
+                rawShaderPointers.push_back(shaderPtr.get()); 
             }
 
             return rawShaderPointers;
