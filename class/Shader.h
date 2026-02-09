@@ -120,6 +120,11 @@ class Shader
             return shaderName;
         }
 
+        GLuint getShaderID()
+        {
+            return shaderID;
+        }
+
 
         GLint getUniformLocation(const char * const name);
 

@@ -5,6 +5,7 @@
 #include <memory>
 #include <filesystem>
 
+#include <glad/glad.h>
 
 #include "Shader.h"
 
@@ -34,19 +35,10 @@ class ShaderManager
     public:
         ShaderManager(std::vector<ShaderProgramFilePaths> shaderSources);
         Shader* getShaderPtr(std::string shaderName);
+        Shader* getShaderPtr(GLuint shaderID);
+        GLuint getShaderID(std::string shaderName);
+        void printAllShaderPrograms();
 
-        std::vector<Shader*> getRawShaderPointers()
-        {
-            std::vector<Shader*> rawShaderPointers;
-            rawShaderPointers.reserve(shaders.size()); 
-
-            for (auto& [key, shaderPtr] : shaders)
-            {
-                rawShaderPointers.push_back(shaderPtr.get()); 
-            }
-
-            return rawShaderPointers;
-        }
 
     private:
         std::unordered_map<std::string, std::unique_ptr<Shader>> shaders;
