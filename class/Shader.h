@@ -58,7 +58,7 @@ class Shader
             }
 
             // This if statement will need to be expanded to accomodate new data types required by the system
-            if constexpr ((std::is_same_v<T, GLint> || std::is_same_v<T, bool>)) // glsl doesn't support bools, need to treat as int
+            if constexpr ((std::is_same_v<T, GLint> || std::is_same_v<T, bool> || std::is_same_v<T, int>)) // glsl doesn't support bools, need to treat as int
             {
                 glUniform1i(valueLocation, value);
             }

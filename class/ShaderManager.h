@@ -39,7 +39,6 @@ class ShaderManager
         GLuint getShaderID(std::string shaderName);
         void printAllShaderPrograms();
 
-
     private:
         std::unordered_map<std::string, std::unique_ptr<Shader>> shaders;
 
