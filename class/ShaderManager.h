@@ -5,13 +5,17 @@
 #include <memory>
 #include <filesystem>
 
+#include <glad/glad.h>
 
 #include "Shader.h"
 
 
 namespace gfx {
 
-struct ShaderFilenameStrings
+constexpr char shaderModuleProjectName[] = "Shaders"; 
+constexpr char shaderSourceFolderName[] = "glsl"; 
+
+struct ShaderProgramFilenameStrings
 {
     std::string setName;
     std::string vertexShader;
@@ -19,32 +23,21 @@ struct ShaderFilenameStrings
 };
 
 // Define type to hold shader paths
-struct ShaderPaths
+struct ShaderProgramFilePaths
 {
     std::string setName;
     std::filesystem::path vertexShader;
     std::filesystem::path fragmentShader;
 };
 
-
 class ShaderManager
 {
     public:
-        ShaderManager(std::vector<ShaderPaths> shaderSources);
+        ShaderManager(std::vector<ShaderProgramFilePaths> shaderSources);
         Shader* getShaderPtr(std::string shaderName);
-
-        std::vector<Shader*> getRawShaderPointers()
-        {
-            std::vector<Shader*> rawShaderPointers;
-            rawShaderPointers.reserve(shaders.size()); // optional, for efficiency
-
-            for (auto& [key, shaderPtr] : shaders)
-            {
-                rawShaderPointers.push_back(shaderPtr.get()); // get raw pointer without transferring ownership
-            }
-
-            return rawShaderPointers;
-        }
+        Shader* getShaderPtr(GLuint shaderID);
+        GLuint getShaderID(std::string shaderName);
+        void printAllShaderPrograms();
 
     private:
         std::unordered_map<std::string, std::unique_ptr<Shader>> shaders;
