@@ -125,7 +125,6 @@ class Shader
             return shaderID;
         }
 
-
         GLint getUniformLocation(const char * const name);
 
         // MVP calculated on GPU side right now, maybe will be switched to CPU once I have more information on this
@@ -136,7 +135,6 @@ class Shader
 
 
     private:
-
         GLuint shaderID;
         std::string shaderName;
 

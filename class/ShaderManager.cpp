@@ -3,7 +3,6 @@
 
 namespace gfx {
 
-
 ShaderManager::ShaderManager(std::vector<ShaderProgramFilePaths> shaderSources)
 {
     for (const auto& shaderSource : shaderSources)

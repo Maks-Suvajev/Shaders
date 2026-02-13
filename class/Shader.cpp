@@ -28,13 +28,11 @@ namespace gfx {
         shaderName = uniqueShaderName;
 	}
 
-
 	void Shader::initialiseMvpMatrices()
 	{
 		loadMvpMatricesLocations();
 		initialiseMvpMatricesValues();
 	}
-
 
 	void Shader::initialiseMvpMatricesValues()
 	{
@@ -43,7 +41,6 @@ namespace gfx {
 		updateViewMatrixValue(glm::mat4(1.0f));
 		updateProjectionMatrixValue(glm::mat4(1.0f));
 	}
-
 
 	void Shader::checkShaderCompilation(GLuint shaderID)
 	{
@@ -61,7 +58,6 @@ namespace gfx {
 
 		}
 	}
-
 
 	std::string Shader::loadShaderCode(const std::string& shaderPath)
 	{
@@ -97,7 +93,6 @@ namespace gfx {
 		return shaderCode;
 	}
 
-
 	GLuint Shader::compileShader(GLenum shaderType, char const * shaderCode)
 	{
 		GLuint shaderObject;
@@ -112,7 +107,6 @@ namespace gfx {
 
 		return shaderObject;
 	}
-
 
 	void Shader::compileShaderProgram(GLuint vertexShader, GLuint fragmentShader)
 	{
@@ -139,7 +133,6 @@ namespace gfx {
 		glDeleteShader(fragmentShader);
 
 	}
-
 
 	// Pull the uniform locations for the transformation matrices Model-View-Projection (MVP)
 	void Shader::loadMvpMatricesLocations()
@@ -172,7 +165,6 @@ namespace gfx {
         }
 	}
 
-
 	GLint Shader::getUniformLocation(const char * const name)
 	{
 			GLint uniformLocation = glGetUniformLocation(shaderID, name);
@@ -186,7 +178,6 @@ namespace gfx {
 
 			return uniformLocation;
 	}
-
 
 	bool Shader::updateModelMatrixValue(const glm::mat4& value)
 	{
@@ -220,7 +211,6 @@ namespace gfx {
         }
 	}
 
-
 	bool Shader::updateViewMatrixValue(const glm::mat4& value)
 	{
 
@@ -253,7 +243,6 @@ namespace gfx {
         }
 	}
 
-
 	bool Shader::updateProjectionMatrixValue(const glm::mat4& value)
 	{
         static bool firstWrite = true;
@@ -284,8 +273,6 @@ namespace gfx {
             return true;
         }
 	}
-
-
 
 	void Shader::loadShaderUniformVariables(const std::string& shaderCode)
 	{
@@ -347,13 +334,11 @@ namespace gfx {
 		}
 	}
 
-
 	void Shader::loadEachFileShaderVariables(const std::string& VertShaderCode, const std::string& FragShaderCode)
 	{
 		loadShaderUniformVariables(VertShaderCode);
 		loadShaderUniformVariables(FragShaderCode);
 	}
-
 
 	void Shader::storeUniform(const GlslUniform &uniform)
 	{
