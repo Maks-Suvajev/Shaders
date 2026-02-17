@@ -2,14 +2,15 @@
 
 #include <fstream>
 #include <sstream>
-#include <glad/glad.h>
 
 namespace gfx {
 
-	Shader::Shader(const std::string& fragmentShaderPath, const std::string& vertexShaderPath, const std::string uniqueShaderName)
-	: modelMatrixLocation(glUniformLocationLoadError),
-	  viewMatrixLocation(glUniformLocationLoadError),
-	  projectionMatrixLocation(glUniformLocationLoadError)
+	Shader::Shader(const std::string& fragmentShaderPath, const std::string& vertexShaderPath, const std::string uniqueShaderName, QOpenGLExtraFunctions* openGLFunctions)
+	: m_modelMatrixLocation(glUniformLocationLoadError),
+	  m_viewMatrixLocation(glUniformLocationLoadError),
+	  m_projectionMatrixLocation(glUniformLocationLoadError),
+      m_openGLFunctions(openGLFunctions),
+      m_shaderName(uniqueShaderName)
 	{
 		std::string vertexShaderCode = loadShaderCode(vertexShaderPath); 
 		std::string fragmentShaderCode = loadShaderCode(fragmentShaderPath);
@@ -25,7 +26,6 @@ namespace gfx {
 
 		initialiseMvpMatrices();
 
-        shaderName = uniqueShaderName;
 	}
 
 	void Shader::initialiseMvpMatrices()
@@ -46,11 +46,11 @@ namespace gfx {
 	{
 		int success;
 		char infoLog[512];
-		glGetShaderiv(shaderID, GL_COMPILE_STATUS, &success);
+		m_openGLFunctions->glGetShaderiv(shaderID, GL_COMPILE_STATUS, &success);
 
 		if (!success)
 		{
-			glGetShaderInfoLog(shaderID, 512, NULL, infoLog);
+			m_openGLFunctions->glGetShaderInfoLog(shaderID, 512, NULL, infoLog);
 
             #ifdef ENABLE_DEBUG_MESSAGES
 			    std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl; // Replace with logging module
@@ -97,11 +97,11 @@ namespace gfx {
 	{
 		GLuint shaderObject;
 
-		shaderObject = glCreateShader(shaderType);
+		shaderObject = m_openGLFunctions->glCreateShader(shaderType);
 
-		glShaderSource(shaderObject, 1, &shaderCode, NULL);
+		m_openGLFunctions->glShaderSource(shaderObject, 1, &shaderCode, NULL);
 
-		glCompileShader(shaderObject);
+		m_openGLFunctions->glCompileShader(shaderObject);
 
 		checkShaderCompilation(shaderObject);
 
@@ -110,54 +110,54 @@ namespace gfx {
 
 	void Shader::compileShaderProgram(GLuint vertexShader, GLuint fragmentShader)
 	{
-		shaderID = glCreateProgram();
+		m_shaderID = m_openGLFunctions->glCreateProgram();
 
-		glAttachShader(shaderID, vertexShader);
-		glAttachShader(shaderID, fragmentShader);
-		glLinkProgram(shaderID);
+		m_openGLFunctions->glAttachShader(m_shaderID, vertexShader);
+		m_openGLFunctions->glAttachShader(m_shaderID, fragmentShader);
+		m_openGLFunctions->glLinkProgram(m_shaderID);
 
 		//Check linking
 		int success;
-		glGetProgramiv(shaderID, GL_LINK_STATUS, &success);
+		m_openGLFunctions->glGetProgramiv(m_shaderID, GL_LINK_STATUS, &success);
 		char infoLog[512];
 
 		if (!success) {
-			glGetProgramInfoLog(shaderID, 512, NULL, infoLog);
+			m_openGLFunctions->glGetProgramInfoLog(m_shaderID, 512, NULL, infoLog);
 
             #ifdef ENABLE_DEBUG_MESSAGES
 			    std::cout << "ERROR::SHADER::PROGRAM::COMPILATION_FAILED\n" << infoLog << std::endl;
             #endif
 		}
 
-		glDeleteShader(vertexShader);
-		glDeleteShader(fragmentShader);
+		m_openGLFunctions->glDeleteShader(vertexShader);
+		m_openGLFunctions->glDeleteShader(fragmentShader);
 
 	}
 
 	// Pull the uniform locations for the transformation matrices Model-View-Projection (MVP)
 	void Shader::loadMvpMatricesLocations()
 	{
-		modelMatrixLocation = glGetUniformLocation(shaderID, modelMatrixUniformName);
+		m_modelMatrixLocation = m_openGLFunctions->glGetUniformLocation(m_shaderID, modelMatrixUniformName);
 
-		if	(modelMatrixLocation == glUniformLocationLoadError)
+		if	(m_modelMatrixLocation == glUniformLocationLoadError)
 		{
             #ifdef ENABLE_DEBUG_MESSAGES
 			    std::cout << "ERROR::\"model\" transformation matrix uniform not found in linked shader program." << std::endl;
             #endif
 		}
 
-		viewMatrixLocation = glGetUniformLocation(shaderID, viewMatrixUniformName);
+		m_viewMatrixLocation = m_openGLFunctions->glGetUniformLocation(m_shaderID, viewMatrixUniformName);
 
-		if	(viewMatrixLocation == glUniformLocationLoadError)
+		if	(m_viewMatrixLocation == glUniformLocationLoadError)
 		{
             #ifdef ENABLE_DEBUG_MESSAGES
 			    std::cout << "ERROR::\"view\" transformation matrix uniform not found in linked shader program." << std::endl;
             #endif
 		}
 
-		projectionMatrixLocation = glGetUniformLocation(shaderID, projectionMatrixUniformName);
+		m_projectionMatrixLocation = m_openGLFunctions->glGetUniformLocation(m_shaderID, projectionMatrixUniformName);
 
-		if	(projectionMatrixLocation == glUniformLocationLoadError)
+		if	(m_projectionMatrixLocation == glUniformLocationLoadError)
 		{
             #ifdef ENABLE_DEBUG_MESSAGES
 			    std::cout << "ERROR::\"projection\" transformation matrix uniform not found in linked shader program." << std::endl;
@@ -167,7 +167,7 @@ namespace gfx {
 
 	GLint Shader::getUniformLocation(const char * const name)
 	{
-			GLint uniformLocation = glGetUniformLocation(shaderID, name);
+			GLint uniformLocation = m_openGLFunctions->glGetUniformLocation(m_shaderID, name);
 
 			if	(uniformLocation == glUniformLocationLoadError)
 			{
@@ -185,14 +185,14 @@ namespace gfx {
 
         if (!firstWrite)
         {
-            if (value == modelMatrixCache)
+            if (value == m_modelMatrixCache)
             {
                 return true;
             }
             
             if (updateUniformValue(modelMatrixUniformName, value))
             {
-                modelMatrixCache = value;
+                m_modelMatrixCache = value;
                 return true;
             }
             else
@@ -218,14 +218,14 @@ namespace gfx {
 
         if (!firstWrite)
         {
-            if (value == viewMatrixCache)
+            if (value == m_viewMatrixCache)
             {
                 return true;
             }
             
             if (updateUniformValue(viewMatrixUniformName, value))
             {
-                viewMatrixCache = value;
+                m_viewMatrixCache = value;
                 return true;
             }
             else
@@ -249,14 +249,14 @@ namespace gfx {
 
         if (!firstWrite)
         {
-            if (value == projectionMatrixCache)
+            if (value == m_projectionMatrixCache)
             {
                 return true;
             }
             
             if (updateUniformValue(projectionMatrixUniformName, value))
             {
-                projectionMatrixCache = value;
+                m_projectionMatrixCache = value;
                 return true;
             }
             else
@@ -354,7 +354,7 @@ namespace gfx {
 
 		if (std::ranges::search(lowerCaseUniformNameView,  std::string_view("model")).begin() != lowerCaseUniformNameView.end())
 		{
-			matrixUniforms.model = uniform;
+			m_matrixUniforms.model = uniform;
 
             #ifdef ENABLE_DEBUG_MESSAGES
 			    std::cout << "DEBUG::Stored as model uniform." << std::endl;
@@ -362,7 +362,7 @@ namespace gfx {
 		}
 		else if (std::ranges::search(lowerCaseUniformNameView, std::string_view("view")).begin() != lowerCaseUniformNameView.end())
 		{
-			matrixUniforms.view = uniform;
+			m_matrixUniforms.view = uniform;
 
             #ifdef ENABLE_DEBUG_MESSAGES
 			    std::cout << "DEBUG::Stored as view uniform." << std::endl;
@@ -370,7 +370,7 @@ namespace gfx {
 		}
 		else if (std::ranges::search(lowerCaseUniformNameView, std::string_view("projection")).begin() != lowerCaseUniformNameView.end())
 		{
-			matrixUniforms.projection = uniform;
+			m_matrixUniforms.projection = uniform;
             #ifdef ENABLE_DEBUG_MESSAGES
 			    std::cout << "DEBUG::Stored as projection uniform." << std::endl;
             #endif
@@ -381,7 +381,7 @@ namespace gfx {
 			    std::cout << "DEBUG::Stored as non-MVP uniform." << std::endl;
             #endif
 
-			nonTransformUniforms.push_back(uniform);
+			m_nonTransformUniforms.push_back(uniform);
 		}
 	}
 }

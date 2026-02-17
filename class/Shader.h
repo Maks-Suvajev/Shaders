@@ -5,14 +5,15 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <type_traits>
 #include <vector>
 #include <ranges>
 #include <algorithm>
+
+// QT
+#include <QOpenGLExtraFunctions>
 
 namespace gfx {
 
@@ -41,88 +42,24 @@ struct TransformMatrixUniforms
 class Shader
 {
     public:
-        Shader(const std::string &fragmentShaderPath, const std::string &vertexShaderPath, const std::string uniqueShaderName);
+        Shader(const std::string &fragmentShaderPath, const std::string &vertexShaderPath, const std::string uniqueShaderName, QOpenGLExtraFunctions* openGLFunctions);
 
         template<typename T>
-        bool updateUniformValue(const GLchar * const name, const T& value)
-        {
-            GLint valueLocation = glGetUniformLocation(shaderID, name); // Needs to be replaced with an interface with a caching interface
-
-            if (valueLocation == glUniformLocationLoadError)
-            {
-                #ifdef ENABLE_DEBUG_MESSAGES
-                    std::cout << "ERROR::" << name << " uniform not found in linked shader program." << std::endl;
-                #endif
-
-                return false;
-            }
-
-            // This if statement will need to be expanded to accomodate new data types required by the system
-            if constexpr ((std::is_same_v<T, GLint> || std::is_same_v<T, bool> || std::is_same_v<T, int>)) // glsl doesn't support bools, need to treat as int
-            {
-                glUniform1i(valueLocation, value);
-            }
-            else if constexpr (std::is_same_v<T, GLfloat>) 
-            {
-                glUniform1f(valueLocation, value);
-            }
-            else if constexpr (std::is_same_v<T, glm::vec2>) 
-            {
-                glUniform2f(valueLocation, value[0], value[1]);
-            }
-            else if constexpr (std::is_same_v<T,glm::vec3>) 
-            {
-                glUniform3f(valueLocation, value[0], value[1], value[2]);
-            }
-            else if constexpr (std::is_same_v<T,glm::vec4>) 
-            {
-                glUniform4f(valueLocation, value[0], value[1], value[2], value[3]);
-            }
-            else if constexpr (std::is_same_v<T,glm::mat2>) 
-            {
-                glUniformMatrix2fv(valueLocation, 1, GL_FALSE, glm::value_ptr(value));
-            }
-            else if constexpr (std::is_same_v<T, glm::mat3>) 
-            {
-                glUniformMatrix3fv(valueLocation, 1, GL_FALSE, glm::value_ptr(value));
-            }
-            else if constexpr (std::is_same_v<T,glm::mat4>) 
-            {
-                glUniformMatrix4fv(valueLocation, 1, GL_FALSE, glm::value_ptr(value));
-            }
-            else
-            {
-                static_assert(always_false<T>::value, "Type provided for uniform update not currently supported.");
-
-            }
-
-            GLenum errorCheck = glGetError();
-
-            if (errorCheck != GL_NO_ERROR)
-            {
-                #ifdef ENABLE_DEBUG_MESSAGES
-                    std::cout << "ERROR:: Could not write to uniform: " << name << "  Error code: " << errorCheck << std::endl;
-                #endif
-                
-                return false;
-            }
-
-            return true;
-        }
+        bool updateUniformValue(const GLchar * const name, const T& value);
 
         void useProgram()
         {
-            glUseProgram(shaderID);
+            m_openGLFunctions->glUseProgram(m_shaderID);
         }
 
         std::string getShaderName()
         {
-            return shaderName;
+            return m_shaderName;
         }
 
         GLuint getShaderID()
         {
-            return shaderID;
+            return m_shaderID;
         }
 
         GLint getUniformLocation(const char * const name);
@@ -135,19 +72,21 @@ class Shader
 
 
     private:
-        GLuint shaderID;
-        std::string shaderName;
+        GLuint      m_shaderID;
+        std::string m_shaderName;
 
-        GLint modelMatrixLocation;
-        GLint viewMatrixLocation;
-        GLint projectionMatrixLocation;
+        GLint m_modelMatrixLocation;
+        GLint m_viewMatrixLocation;
+        GLint m_projectionMatrixLocation;
 
-        glm::mat4 modelMatrixCache;
-        glm::mat4 viewMatrixCache;
-        glm::mat4 projectionMatrixCache;
+        glm::mat4 m_modelMatrixCache;
+        glm::mat4 m_viewMatrixCache;
+        glm::mat4 m_projectionMatrixCache;
 
-        TransformMatrixUniforms matrixUniforms;
-        std::vector<GlslUniform> nonTransformUniforms;
+        TransformMatrixUniforms  m_matrixUniforms;
+        std::vector<GlslUniform> m_nonTransformUniforms;
+
+        QOpenGLExtraFunctions* m_openGLFunctions;
 
         void checkShaderCompilation(GLuint shaderID);
 
@@ -169,6 +108,73 @@ class Shader
 
         void storeUniform(const GlslUniform& uniform);
 };
+
+template<typename T>
+bool Shader::updateUniformValue(const GLchar * const name, const T& value)
+{
+    GLint valueLocation = m_openGLFunctions->glGetUniformLocation(m_shaderID, name); // Needs to be replaced with an interface with a caching interface
+
+    if (valueLocation == glUniformLocationLoadError)
+    {
+        #ifdef ENABLE_DEBUG_MESSAGES
+            std::cout << "ERROR::" << name << " uniform not found in linked shader program." << std::endl;
+        #endif
+
+        return false;
+    }
+
+    // This if statement will need to be expanded to accomodate new data types required by the system
+    if constexpr ((std::is_same_v<T, GLint> || std::is_same_v<T, bool> || std::is_same_v<T, int>)) // glsl doesn't support bools, need to treat as int
+    {
+        m_openGLFunctions->glUniform1i(valueLocation, value);
+    }
+    else if constexpr (std::is_same_v<T, GLfloat>) 
+    {
+        m_openGLFunctions->glUniform1f(valueLocation, value);
+    }
+    else if constexpr (std::is_same_v<T, glm::vec2>) 
+    {
+        m_openGLFunctions->glUniform2f(valueLocation, value[0], value[1]);
+    }
+    else if constexpr (std::is_same_v<T,glm::vec3>) 
+    {
+        m_openGLFunctions->glUniform3f(valueLocation, value[0], value[1], value[2]);
+    }
+    else if constexpr (std::is_same_v<T,glm::vec4>) 
+    {
+        m_openGLFunctions->glUniform4f(valueLocation, value[0], value[1], value[2], value[3]);
+    }
+    else if constexpr (std::is_same_v<T,glm::mat2>) 
+    {
+        m_openGLFunctions->glUniformMatrix2fv(valueLocation, 1, GL_FALSE, glm::value_ptr(value));
+    }
+    else if constexpr (std::is_same_v<T, glm::mat3>) 
+    {
+        m_openGLFunctions->glUniformMatrix3fv(valueLocation, 1, GL_FALSE, glm::value_ptr(value));
+    }
+    else if constexpr (std::is_same_v<T,glm::mat4>) 
+    {
+        m_openGLFunctions->glUniformMatrix4fv(valueLocation, 1, GL_FALSE, glm::value_ptr(value));
+    }
+    else
+    {
+        static_assert(always_false<T>::value, "Type provided for uniform update not currently supported.");
+
+    }
+
+    GLenum errorCheck = m_openGLFunctions->glGetError();
+
+    if (errorCheck != GL_NO_ERROR)
+    {
+        #ifdef ENABLE_DEBUG_MESSAGES
+            std::cout << "ERROR:: Could not write to uniform: " << name << "  Error code: " << errorCheck << std::endl;
+        #endif
+        
+        return false;
+    }
+
+    return true;
+}
 
 }
 

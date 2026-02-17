@@ -5,10 +5,10 @@
 #include <memory>
 #include <filesystem>
 
-#include <glad/glad.h>
-
 #include "Shader.h"
 
+// QT
+#include <QOpenGLExtraFunctions>
 
 namespace gfx {
 
@@ -33,7 +33,7 @@ struct ShaderProgramFilePaths
 class ShaderManager
 {
     public:
-        ShaderManager(std::vector<ShaderProgramFilePaths> shaderSources);
+        ShaderManager(std::vector<ShaderProgramFilePaths> shaderSources, QOpenGLExtraFunctions* openGLFunctions);
         Shader* getShaderPtr(std::string shaderName);
         Shader* getShaderPtr(GLuint shaderID);
         GLuint getShaderID(std::string shaderName);
@@ -41,6 +41,8 @@ class ShaderManager
 
     private:
         std::unordered_map<std::string, std::unique_ptr<Shader>> shaders;
+
+        QOpenGLExtraFunctions* m_openGLFunctions;
 
 };
 
