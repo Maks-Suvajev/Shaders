@@ -6,29 +6,12 @@
 #include <filesystem>
 
 #include "Shader.h"
+#include "ShaderTypes.h"
 
 // QT
 #include <QOpenGLExtraFunctions>
 
 namespace gfx {
-
-constexpr char shaderModuleProjectName[] = "Shaders"; 
-constexpr char shaderSourceFolderName[] = "glsl"; 
-
-struct ShaderProgramFilenameStrings
-{
-    std::string setName;
-    std::string vertexShader;
-    std::string fragmentShader;
-};
-
-// Define type to hold shader paths
-struct ShaderProgramFilePaths
-{
-    std::string setName;
-    std::filesystem::path vertexShader;
-    std::filesystem::path fragmentShader;
-};
 
 class ShaderManager
 {
